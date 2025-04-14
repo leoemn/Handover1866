@@ -31,55 +31,87 @@
   <script>
     const taskList = [
       "freezer done", "bulks done", "ambient backstock done", "C Dates done",
-      "freshness done (Saturday only)", "Debriefs checked & signed", "all picklist and allocation checked",
+      "freshness done", "Debriefs checked & signed", "all picklist and allocation checked",
       "back office cleared", "Shop decarded", "Due Diligenced checked and  signed",
       "ZAP the gap done", "Temperature checks done", "QFC and toilet checklist complete",
       "All putbacks are done", "All W/O cleared", "Bakery W/O done", "bakery tongs cleaned",
       "till/SCO cleaning to an acceptable level", "warehouse left tidy and waste organised",
       "no absence calls to report", "no errors on clock in day end", "Ran Finacial day end"
     ];
-
+  
+    function getCorrectDate() {
+      const now = new Date();
+      const hour = now.getHours();
+  
+      if (hour < 4) {
+        // Between midnight and 4AM, return yesterday's date
+        const yesterday = new Date(now);
+        yesterday.setDate(now.getDate() - 1);
+        return yesterday;
+      }
+      return now;
+    }
+  
+    function isSaturdayReport() {
+      const now = new Date();
+      const hour = now.getHours();
+      const day = now.getDay();
+  
+      // If it's Sunday (0) and between 12 AM – 4 AM → It's Saturday’s report
+      return day === 0 && hour < 4;
+    }
+  
     const taskDiv = document.getElementById("tasks");
+    const freshnessIndex = taskList.findIndex(task => task.includes("freshness"));
+    const isSatReport = isSaturdayReport();
+  
     taskList.forEach((task, index) => {
       const label = document.createElement("label");
-      label.innerHTML = `<input type="checkbox" id="task${index}" checked> - ${task}`;
+      const isFreshness = index === freshnessIndex;
+      const isChecked = isFreshness ? isSatReport : true;
+  
+      label.innerHTML = `<input type="checkbox" id="task${index}" ${isChecked ? 'checked' : ''}> - ${task}`;
       taskDiv.appendChild(label);
     });
-
+  
+    function formatDate(date) {
+      return date.toLocaleDateString('en-GB'); // DD/MM/YYYY
+    }
+  
     function generateReport() {
       const turnover = document.getElementById("turnover").value;
       const units = document.getElementById("units").value;
       const vsTarget = document.getElementById("vs_target").value;
       const hours = document.getElementById("hours").value;
       const comments = document.getElementById("comments").value.trim();
-      const date = new Date().toLocaleDateString('en-GB');
-
+      const date = formatDate(getCorrectDate());
+  
       let message = `Date: ${date}\n\nTurnover: £${turnover}\nUnits: ${units}\nVs target: ${vsTarget}\nHours saved: ${hours}\n`;
-
+  
       taskList.forEach((task, index) => {
         if (document.getElementById(`task${index}`).checked) {
           message += `- ${task}\n`;
         }
       });
-
+  
       if (comments !== "") {
         message += `\nComments:\n${comments}`;
       }
-
+  
       document.getElementById("output").value = message.trim();
     }
-
+  
     function copyText() {
       const output = document.getElementById("output");
       output.select();
       document.execCommand("copy");
       alert("Copied to clipboard!");
     }
-
+  
     function openWhatsApp() {
       const msg = encodeURIComponent(document.getElementById("output").value);
       window.open(`https://wa.me/?text=${msg}`, '_blank');
     }
-  </script>
+  </script>  
 </body>
 </html>
